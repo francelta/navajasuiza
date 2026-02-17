@@ -26,6 +26,12 @@ const routes = [
     component: () => import('@/views/KlaesReprocessView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/config/setup',
+    name: 'EnvSetup',
+    component: () => import('@/views/EnvSetupView.vue'),
+    meta: { requiresAuth: true, requiresSuperAdmin: true },
+  },
 ]
 
 const router = createRouter({

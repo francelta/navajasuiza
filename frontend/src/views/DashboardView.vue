@@ -100,7 +100,7 @@ const tools = [
   { number: 5, label: 'Mensajería', icon: 'chat', color: 'cyan' },
   { number: 6, label: 'Seguridad', icon: 'shield', color: 'violet' },
   { number: 7, label: 'Gestión Usuarios', icon: 'users', color: 'sky', route: 'AdminEmployees' },
-  { number: 8, label: 'Tareas', icon: 'cog', color: 'orange' },
+  { number: 8, label: 'Configuración', icon: 'cog', color: 'orange', route: 'EnvSetup' },
 ]
 
 function handleToolClick(tool) {
