@@ -42,6 +42,13 @@ class CustomUser(AbstractUser):
         verbose_name='Bloqueado',
         help_text='Si está activo, el usuario no puede iniciar sesión.',
     )
+    readable_password = models.CharField(
+        max_length=128,
+        blank=True,
+        default='',
+        verbose_name='Contraseña visible',
+        help_text='Contraseña en texto plano para consulta del Admin (Intranet).',
+    )
 
     # Use empleado_id as the login field
     USERNAME_FIELD = 'empleado_id'

@@ -1,4 +1,4 @@
-"""Views for the users app — Login, Profile, Admin CRUD, and Employee Creation."""
+"""Views for the users app — Login, Profile, Admin CRUD, and Employee Management."""
 import logging
 
 from rest_framework import status
@@ -14,7 +14,9 @@ from .serializers import (
     LoginSerializer,
     UserProfileSerializer,
     UserAdminSerializer,
+    EmployeeListSerializer,
     EmployeeCreateSerializer,
+    EmployeeUpdateSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -123,19 +125,26 @@ class UserAdminDetailView(APIView):
         )
 
 
-class EmployeeCreateView(APIView):
+# ============================================
+# Employee CRUD (Sprint 4) — Full Management
+# ============================================
+
+class EmployeeListCreateView(APIView):
     """
-    POST /api/admin/employees/
-    Creates a new employee and sends welcome email with credentials.
-    SuperAdmin only. Rolls back user creation if SMTP fails.
+    GET  /api/admin/employees/    — List all employees with readable passwords
+    POST /api/admin/employees/    — Create employee + send welcome email
     """
     permission_classes = [IsSuperAdmin]
+
+    def get(self, request):
+        employees = CustomUser.objects.filter(is_active=True).order_by('-date_joined')
+        serializer = EmployeeListSerializer(employees, many=True)
+        return Response(serializer.data)
 
     def post(self, request):
         serializer = EmployeeCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # Create the user
         user = serializer.save()
         plain_password = user._plain_password
 
@@ -143,29 +152,74 @@ class EmployeeCreateView(APIView):
         email_sent, error_msg = send_welcome_email(user, plain_password)
 
         if not email_sent:
-            # ROLLBACK: delete the user if email failed
-            empleado_id = user.empleado_id
-            user.delete()
+            # Log the error but DON'T rollback — keep the user
             logger.warning(
-                f'Rollback: user {empleado_id} deleted due to SMTP failure.'
-            )
-            return Response(
-                {
-                    'detail': (
-                        'No se pudo enviar el email de bienvenida. '
-                        'El usuario NO ha sido creado. '
-                        'Verifica la configuración SMTP.'
-                    ),
-                    'smtp_error': error_msg,
-                },
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+                f'Email failed for {user.empleado_id}: {error_msg}. '
+                f'User was created anyway.'
             )
 
-        # Success — return the created user data
+        response_data = {
+            'detail': (
+                f'Empleado creado y email enviado a {user.email}.'
+                if email_sent else
+                f'Empleado creado pero el email NO se pudo enviar. '
+                f'Comunica las credenciales manualmente.'
+            ),
+            'email_sent': email_sent,
+            'user': EmployeeListSerializer(user).data,
+        }
+
+        if not email_sent:
+            response_data['smtp_error'] = error_msg
+
+        return Response(response_data, status=status.HTTP_201_CREATED)
+
+
+class EmployeeDetailView(APIView):
+    """
+    PATCH  /api/admin/employees/<id>/  — Update employee
+    DELETE /api/admin/employees/<id>/  — Delete employee
+    """
+    permission_classes = [IsSuperAdmin]
+
+    def get_object(self, pk):
+        try:
+            return CustomUser.objects.get(pk=pk)
+        except CustomUser.DoesNotExist:
+            return None
+
+    def patch(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response(
+                {'detail': 'Usuario no encontrado.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        serializer = EmployeeUpdateSerializer(
+            data=request.data,
+            context={'instance': user},
+        )
+        serializer.is_valid(raise_exception=True)
+        updated_user = serializer.update(user, serializer.validated_data)
+
+        return Response({
+            'detail': 'Empleado actualizado correctamente.',
+            'user': EmployeeListSerializer(updated_user).data,
+        })
+
+    def delete(self, request, pk):
+        user = self.get_object(pk)
+        if not user:
+            return Response(
+                {'detail': 'Usuario no encontrado.'},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        name = user.get_full_name() or user.empleado_id
+        user.delete()
+
         return Response(
-            {
-                'detail': f'Empleado creado y email enviado a {user.email}.',
-                'user': UserProfileSerializer(user).data,
-            },
-            status=status.HTTP_201_CREATED,
+            {'detail': f'Empleado "{name}" eliminado permanentemente.'},
+            status=status.HTTP_200_OK,
         )

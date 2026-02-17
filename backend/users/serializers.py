@@ -92,15 +92,39 @@ class UserAdminSerializer(serializers.ModelSerializer):
         return instance
 
 
+# ============================================
+# Employee CRUD Serializers (Sprint 4)
+# ============================================
+
+class EmployeeListSerializer(serializers.ModelSerializer):
+    """
+    Read serializer for the employee table.
+    Includes readable_password for admin visibility.
+    """
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            'id', 'empleado_id', 'first_name', 'last_name', 'full_name',
+            'email', 'readable_password', 'role', 'departamento',
+            'is_blocked', 'is_active', 'date_joined',
+        ]
+        read_only_fields = fields
+
+    def get_full_name(self, obj):
+        return obj.get_full_name() or obj.username
+
+
 class EmployeeCreateSerializer(serializers.Serializer):
     """
-    Serializer for creating a new employee and sending welcome email.
-    Used by the EmployeeCreateView (SuperAdmin only).
+    Serializer for creating a new employee.
+    Saves both hashed password AND readable_password.
     """
     first_name = serializers.CharField(max_length=150)
     last_name = serializers.CharField(max_length=150)
     email = serializers.EmailField()
-    password = serializers.CharField(min_length=6, write_only=True)
+    password = serializers.CharField(min_length=6)
     role = serializers.ChoiceField(
         choices=CustomUser.Role.choices,
         default=CustomUser.Role.EMPLEADO,
@@ -108,17 +132,18 @@ class EmployeeCreateSerializer(serializers.Serializer):
     departamento = serializers.CharField(max_length=100, required=False, default='')
 
     def validate_email(self, value):
-        if CustomUser.objects.filter(email=value).exists():
+        # On update, exclude self
+        instance = self.context.get('instance')
+        qs = CustomUser.objects.filter(email=value)
+        if instance:
+            qs = qs.exclude(pk=instance.pk)
+        if qs.exists():
             raise serializers.ValidationError(
                 'Ya existe un usuario con este email.'
             )
         return value
 
     def create(self, validated_data):
-        """
-        Create the user. The plain password is stored temporarily
-        in _plain_password for the view to use when sending the email.
-        """
         plain_password = validated_data.pop('password')
         email = validated_data['email']
 
@@ -139,7 +164,48 @@ class EmployeeCreateSerializer(serializers.Serializer):
             last_name=validated_data['last_name'],
             role=validated_data.get('role', CustomUser.Role.EMPLEADO),
             departamento=validated_data.get('departamento', ''),
+            readable_password=plain_password,
         )
-        # Attach plain password so the view can send it via email
         user._plain_password = plain_password
         return user
+
+
+class EmployeeUpdateSerializer(serializers.Serializer):
+    """
+    Serializer for updating an existing employee.
+    Syncs readable_password if password changes.
+    """
+    first_name = serializers.CharField(max_length=150, required=False)
+    last_name = serializers.CharField(max_length=150, required=False)
+    email = serializers.EmailField(required=False)
+    password = serializers.CharField(min_length=6, required=False)
+    role = serializers.ChoiceField(
+        choices=CustomUser.Role.choices,
+        required=False,
+    )
+    departamento = serializers.CharField(max_length=100, required=False)
+    is_blocked = serializers.BooleanField(required=False)
+
+    def validate_email(self, value):
+        instance = self.context.get('instance')
+        qs = CustomUser.objects.filter(email=value)
+        if instance:
+            qs = qs.exclude(pk=instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError(
+                'Ya existe un usuario con este email.'
+            )
+        return value
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if password:
+            instance.set_password(password)
+            instance.readable_password = password
+
+        instance.save()
+        return instance
