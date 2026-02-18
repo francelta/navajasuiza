@@ -58,7 +58,12 @@ python manage.py create_superadmin
 python manage.py runserver
 ```
 
-> 🔑 SuperAdmin por defecto: `ADMIN001` / `admin123`
+> 🔑 **Credenciales por defecto del SuperAdmin:**
+>
+> | Campo | Valor |
+> |-------|-------|
+> | **ID Empleado** | `ADMIN001` |
+> | **Contraseña** | `admin123` |
 
 ### 3. Frontend (Vue 3)
 
