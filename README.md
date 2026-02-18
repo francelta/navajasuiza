@@ -77,6 +77,23 @@ npm run dev
 
 ---
 
+## ⚠️ Requisitos del Sistema (Windows)
+
+> [!IMPORTANT]
+> **Driver ODBC para SQL Server (Klaes)**
+>
+> Este proyecto utiliza `pyodbc` + `sqlalchemy` para conectar con la base de datos **Klaes (SQL Server)**.
+> Si al ejecutar obtienes el error *"Data source name not found"* o *"Can't open lib 'ODBC Driver 17'"*, necesitas instalar el driver en tu máquina Windows:
+>
+> 📥 **[Descargar ODBC Driver 17 for SQL Server (x64)](https://go.microsoft.com/fwlink/?linkid=2137251)** — Microsoft oficial (`msodbcsql.msi`)
+>
+> Tras la instalación, verifica con:
+> ```powershell
+> odbcad32.exe   # Abre el gestor ODBC → pestaña "Drivers" → debe aparecer "ODBC Driver 17 for SQL Server"
+> ```
+
+---
+
 ## ⚙️ Configuración del Entorno
 
 Copia el archivo de ejemplo y rellena con los valores de tu empresa:
