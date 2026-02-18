@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'users',
     'core',
     'tools',
+    'klaes_integration',
 ]
 
 MIDDLEWARE = [
@@ -163,4 +164,22 @@ SAGE_WS_PASSWORD = os.getenv('SAGE_WS_PASSWORD', '')
 SAGE_POOL_ALIAS = os.getenv('SAGE_POOL_ALIAS', 'PRODUCTION')
 SAGE_WS_LANGUAGE = os.getenv('SAGE_WS_LANGUAGE', 'SPA')
 SAGE_WS_IMPORT_TEMPLATE = os.getenv('SAGE_WS_IMPORT_TEMPLATE', 'KLAES')
+
+# ============================================
+# Klaes SQL Server — ODBC Connection
+# ============================================
+_klaes_server = os.getenv('KLAES_DB_SERVER', '')
+_klaes_db = os.getenv('KLAES_DB_NAME', '')
+_klaes_user = os.getenv('KLAES_DB_USER', '')
+_klaes_pass = os.getenv('KLAES_DB_PASSWORD', '')
+_klaes_driver = os.getenv('KLAES_DB_DRIVER', 'ODBC+Driver+17+for+SQL+Server')
+
+if _klaes_server and _klaes_db:
+    KLAES_DB_CONNECTION_STRING = (
+        f'mssql+pyodbc://{_klaes_user}:{_klaes_pass}'
+        f'@{_klaes_server}/{_klaes_db}'
+        f'?driver={_klaes_driver}&TrustServerCertificate=yes'
+    )
+else:
+    KLAES_DB_CONNECTION_STRING = ''
 

@@ -169,6 +169,7 @@ const groupIcons = {
   'Email SMTP': '📧',
   'Klaes / ETL': '📄',
   'Sage X3': '🏭',
+  'Klaes SQL Server': '🗄️',
 }
 
 const pendingChanges = computed(() => {

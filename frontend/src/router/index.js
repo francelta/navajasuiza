@@ -32,6 +32,12 @@ const routes = [
     component: () => import('@/views/EnvSetupView.vue'),
     meta: { requiresAuth: true, requiresSuperAdmin: true },
   },
+  {
+    path: '/klaes/manager',
+    name: 'KlaesManager',
+    component: () => import('@/views/KlaesManagerView.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

@@ -11,6 +11,7 @@ urlpatterns = [
     path('api/users/', include('users.urls')),
     path('api/tools/', include('tools.urls')),
     path('api/config/', include('core.urls')),
+    path('api/klaes/', include('klaes_integration.urls')),
 ]
 
 if settings.DEBUG:

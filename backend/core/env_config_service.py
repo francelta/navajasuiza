@@ -44,6 +44,13 @@ REQUIRED_ENV_VARS = [
     ('SAGE_POOL_ALIAS', 'Pool Alias', 'Sage X3', False, 'PRODUCTION'),
     ('SAGE_WS_LANGUAGE', 'Idioma Sage', 'Sage X3', False, 'SPA'),
     ('SAGE_WS_IMPORT_TEMPLATE', 'Plantilla Importación', 'Sage X3', False, 'KLAES'),
+
+    # --- Klaes SQL Server (ODBC) ---
+    ('KLAES_DB_SERVER', 'Servidor SQL Server', 'Klaes SQL Server', False, '192.168.1.100'),
+    ('KLAES_DB_NAME', 'Nombre Base de Datos', 'Klaes SQL Server', False, 'KlaesDB'),
+    ('KLAES_DB_USER', 'Usuario SQL', 'Klaes SQL Server', False, 'sa'),
+    ('KLAES_DB_PASSWORD', 'Contraseña SQL', 'Klaes SQL Server', True, ''),
+    ('KLAES_DB_DRIVER', 'Driver ODBC', 'Klaes SQL Server', False, 'ODBC+Driver+17+for+SQL+Server'),
 ]
 
 
@@ -92,6 +99,7 @@ def get_env_status():
         is_placeholder = raw_value in (
             '', 'tu_contraseña_smtp_aqui', 'tu_password_sage',
             'navajasuiza-cambia-esta-clave-en-produccion',
+            'tu_password_sql_server',
         )
         is_set = bool(raw_value) and not is_placeholder
 
@@ -133,6 +141,7 @@ def update_env_var(key, value):
     is_placeholder = current_raw in (
         '', 'tu_contraseña_smtp_aqui', 'tu_password_sage',
         'navajasuiza-cambia-esta-clave-en-produccion',
+        'tu_password_sql_server',
     )
     has_real_value = bool(current_raw) and not is_placeholder
 
