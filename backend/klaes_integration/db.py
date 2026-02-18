@@ -147,3 +147,53 @@ def update_material_price(material_id, new_price, updated_by='API_NAVAJASUIZA'):
     except SQLAlchemyError as e:
         logger.error(f'[KLAES] SQL Error updating price: {e}')
         return False, f'Error de base de datos: {str(e)}'
+
+
+def get_quotation_details(q_number):
+    """
+    Query quotation (presupuesto) from Klaes: header + line items.
+    Exact SQL from FastAPI codebase, column names in German preserved.
+    Returns (data_dict, None) on success or (None, error_message) on failure.
+    """
+    header_query = text("""
+        SELECT
+            p.ProjNr as ID,
+            p.Status as EstadoInterno,
+            p.DruckStatus as EstadoImpresion,
+            p.DruckModus as ModalidadImpresion,
+            a.Name1 as Cliente,
+            p.Datum as Fecha,
+            p.GesamtNetto as PrecioTotalNeto,
+            p.Waehrung as Moneda
+        FROM PR_Projekte p
+        LEFT JOIN AD_Adressen a ON p.AdressID = a.AdressID
+        WHERE p.ProjNr = :q_id
+    """)
+
+    items_query = text("""
+        SELECT
+            PosNr,
+            Stueck as Cantidad,
+            Bezeichnung as Descripcion,
+            Breite as Ancho,
+            Hoehe as Alto,
+            EinzelPreis as PrecioUnitario
+        FROM PO_Positionen
+        WHERE ProjNr = :q_id
+        ORDER BY PosNr ASC
+    """)
+
+    with klaes_connection() as conn:
+        header = conn.execute(header_query, {'q_id': q_number}).mappings().first()
+
+        if header is None:
+            return None, f'El presupuesto "{q_number}" no existe.'
+
+        items = conn.execute(items_query, {'q_id': q_number}).mappings().fetchall()
+
+        return {
+            'existe': True,
+            'cabecera': dict(header),
+            'items': [dict(row) for row in items],
+            'total_items': len(items),
+        }, None

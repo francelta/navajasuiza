@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from .db import get_material_info, update_material_price
+from .db import get_material_info, update_material_price, get_quotation_details
 
 logger = logging.getLogger(__name__)
 
@@ -140,3 +140,50 @@ class KlaesPriceUpdateView(APIView):
                 {'detail': message},
                 status=status.HTTP_404_NOT_FOUND,
             )
+
+
+class KlaesQuotationDetailView(APIView):
+    """
+    GET /api/klaes/quotation/<q_number>/
+    Busca un presupuesto por su número (ej: Q230001).
+    Devuelve cabecera (cliente, estado, fecha, total) + líneas de ítems.
+    Translated from FastAPI: @app.get("/v1/quotation/{q_number}")
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, q_number):
+        if not q_number or not q_number.strip():
+            return Response(
+                {'detail': 'El número de presupuesto es obligatorio.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        q_number = q_number.strip()
+
+        logger.info(
+            f'[KLAES] Quotation query: "{q_number}" '
+            f'by {request.user.empleado_id}'
+        )
+
+        try:
+            data, error = get_quotation_details(q_number)
+        except RuntimeError as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        except Exception as e:
+            logger.error(f'[KLAES] Quotation error: {e}')
+            return Response(
+                {'detail': f'Error en servidor Klaes: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        if data is None:
+            return Response(
+                {'detail': error},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        data['queried_by'] = request.user.empleado_id
+        return Response(data)
