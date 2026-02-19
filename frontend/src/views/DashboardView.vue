@@ -95,7 +95,7 @@ const roleBadge = computed(() => roleLabels[auth.userRole] || auth.userRole)
 const tools = [
   { number: 1, label: 'Reprocesar Klaes', icon: 'folder', color: 'amber', route: 'KlaesReprocess' },
   { number: 2, label: 'Klaes Actions', icon: 'chart', color: 'emerald', route: 'KlaesManager' },
-  { number: 3, label: 'Documentos', icon: 'clipboard', color: 'indigo' },
+  { number: 3, label: 'Informes', icon: 'clipboard', color: 'indigo', route: 'Reports' },
   { number: 4, label: 'Calendario', icon: 'calendar', color: 'rose' },
   { number: 5, label: 'Mensajería', icon: 'chat', color: 'cyan' },
   { number: 6, label: 'Seguridad', icon: 'shield', color: 'violet' },

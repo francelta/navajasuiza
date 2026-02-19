@@ -38,6 +38,12 @@ const routes = [
     component: () => import('@/views/KlaesManagerView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/reports',
+    name: 'Reports',
+    component: () => import('@/views/ReportsView.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

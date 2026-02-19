@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'core',
     'tools',
     'klaes_integration',
+    'reports',
 ]
 
 MIDDLEWARE = [

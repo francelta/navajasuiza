@@ -12,6 +12,7 @@ urlpatterns = [
     path('api/tools/', include('tools.urls')),
     path('api/config/', include('core.urls')),
     path('api/klaes/', include('klaes_integration.urls')),
+    path('api/reports/', include('reports.urls')),
 ]
 
 if settings.DEBUG:
