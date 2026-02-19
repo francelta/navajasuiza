@@ -44,6 +44,12 @@ const routes = [
     component: () => import('@/views/ReportsView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/reports/:id/builder',
+    name: 'ReportBuilder',
+    component: () => import('@/views/ReportBuilder.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

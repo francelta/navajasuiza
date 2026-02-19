@@ -24,6 +24,8 @@ gantt
     section Admin
         Fase 4 - Setup Wizard       :done, f4, after f3, 1d
         Fase 5 - CRUD Empleados     :done, f5, after f4, 1d
+    section BI Engine
+        Sprint 8d - App Container   :done, s8d, after f5, 1d
 ```
 
 ---
@@ -224,13 +226,151 @@ UPDATE  → if new password: set_password(hash) + readable_password = new
 
 ---
 
+## 📊 Sprint 8d — Motor BI: Application Container (Multi-Script, Multi-Sheet)
+
+> **Objetivo:** Construir un motor BI conectado a bases de datos emulando la arquitectura de Qlik Sense: una *Aplicación* contiene N *scripts de carga* (cada uno apuntando a una DB distinta) y N *hojas de visualización*.
+
+### Arquitectura de Modelos
+
+```mermaid
+erDiagram
+    DBConnection ||--o{ AppLoadScript : "1:N"
+    ReportApp ||--o{ AppLoadScript : "1:N scripts"
+    ReportApp ||--o{ ReportSheet : "1:N sheets"
+
+    DBConnection {
+        int id PK
+        string name UK
+        string engine "sqlserver|mysql|postgresql"
+        string host
+        int port
+        string database
+        string username
+        string password
+    }
+    ReportApp {
+        int id PK
+        string name
+        string description
+        FK created_by
+    }
+    AppLoadScript {
+        int id PK
+        FK app
+        FK connection
+        string name
+        text query_text
+        int order
+        int last_row_count
+        datetime last_executed_at
+        text last_error
+    }
+    ReportSheet {
+        int id PK
+        FK app
+        string title
+        json layout_json
+        int order
+    }
+```
+
+| Modelo | Equivalente Qlik | Propósito |
+|--------|-------------------|-----------|
+| `DBConnection` | Data Connection | Conexión reutilizable (SQL Server, MySQL, PostgreSQL) |
+| `ReportApp` | `.qvf` file | Contenedor de la aplicación BI |
+| `AppLoadScript` | Script tab | Query SQL vinculada a una conexión |
+| `ReportSheet` | Sheet | Hoja de visualización con configuración de gráficos |
+
+### API Endpoints (11 rutas)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET/POST | `/api/reports/connections/` | Listar / crear conexiones |
+| GET/PUT/DELETE | `/api/reports/connections/<id>/` | CRUD conexión |
+| POST | `/api/reports/connections/<id>/test/` | Test de conectividad |
+| GET/POST | `/api/reports/apps/` | Listar / crear apps |
+| GET/PUT/DELETE | `/api/reports/apps/<id>/` | CRUD app (detalle anidado con scripts + sheets) |
+| POST | `/api/reports/apps/<id>/execute/` | Ejecutar TODOS los scripts de la app |
+| POST | `/api/reports/scripts/` | Crear script de carga |
+| GET/PUT/DELETE | `/api/reports/scripts/<id>/` | CRUD script |
+| POST | `/api/reports/sheets/` | Crear hoja |
+| GET/PUT/DELETE | `/api/reports/sheets/<id>/` | CRUD hoja |
+
+### Query Engine (`query_engine.py`)
+
+```
+POST /api/reports/apps/<id>/execute/
+  │
+  ├─ Fetch ReportApp + prefetch scripts + connections
+  │
+  ├─ For each AppLoadScript (ordered by `order`):
+  │     ├─ Security scan (block DROP/TRUNCATE/ALTER/DELETE/INSERT/UPDATE/EXEC)
+  │     ├─ Build ODBC connection string (pyodbc, lazy import)
+  │     ├─ Execute with pandas.read_sql()
+  │     ├─ Classify columns → numeric | datetime | categorical
+  │     ├─ Truncate to 500 rows for frontend
+  │     └─ Update script metadata (row_count, last_executed_at)
+  │
+  └─ Return: { tables: { script_name: {columns, rows} }, log: [...], success_count }
+```
+
+**Seguridad:**
+- Password `write_only` en serializers (nunca se devuelve al frontend)
+- Keywords bloqueados: `DROP`, `TRUNCATE`, `ALTER`, `CREATE`, `DELETE`, `INSERT`, `UPDATE`, `EXEC`, `XP_`
+- `pyodbc` lazy-import para evitar crash en dev sin drivers ODBC
+
+### Frontend
+
+**ReportsView.vue — Application Hub:**
+- Grid de tarjetas con nombre, descripción, contadores (scripts / hojas) y fecha
+- Botón "+ Nueva App" crea la aplicación y redirige al builder
+- Eliminación con confirmación
+
+**ReportBuilder.vue — Workspace de 3 vistas:**
+
+| Vista | Icono | Función |
+|-------|-------|---------|
+| Conexiones | 🔌 | CRUD de `DBConnection` — form con engine/host/port/db/user/pass, lista con test/edit/delete |
+| Editor de Carga | 📝 | Sidebar de scripts + editor SQL + botones guardar/ejecutar + tabla de resultados |
+| Hojas | 📊 | Lista de sheets + editor de gráficos con dimension/metric pickers + Chart.js rendering |
+
+### Archivos
+
+```
+backend/reports/
+├── models.py              ← DBConnection, ReportApp, AppLoadScript, ReportSheet
+├── serializers.py         ← Nested pattern (App → Scripts + Sheets)
+├── views.py               ← 11 API endpoints
+├── urls.py                ← Route mapping
+├── services/
+│   └── query_engine.py    ← Multi-source executor
+└── migrations/
+    └── 0004_*.py          ← App Container migration
+
+frontend/src/views/
+├── ReportsView.vue        ← App cards hub
+└── ReportBuilder.vue      ← 3-view workspace
+```
+
+### Resultado
+- ✅ 4 modelos Django con relaciones App Container
+- ✅ Serializers anidados (App → Scripts + Sheets)
+- ✅ 11 endpoints REST con autenticación
+- ✅ Motor de consultas multi-conexión con seguridad SQL
+- ✅ Hub de aplicaciones con tarjetas y contadores
+- ✅ Workspace con gestión de conexiones, editor SQL y hojas de gráficos
+- ✅ Migraciones aplicadas y verificadas
+
+---
+
 ## 🗺️ Mapa de Navegación Final
 
 ```
 Login (/)
   └── Dashboard (8 botones)
         ├── 1. Reprocesar Klaes    → /tools/klaes
-        ├── 2. Informes            → (pendiente)
+        ├── 2. Informes            → /reports
+        │     └── App Builder      → /reports/:id/builder
         ├── 3. Documentos          → (pendiente)
         ├── 4. Calendario          → (pendiente)
         ├── 5. Mensajería          → (pendiente)
@@ -245,9 +385,9 @@ Login (/)
 
 | Componente | Archivos | Estado |
 |------------|----------|--------|
-| Backend Django | 18 | ✅ Producción |
+| Backend Django | 24 | ✅ Producción |
 | Frontend Vue | 10 | ✅ Producción |
-| Migraciones | 2 | ✅ Aplicadas |
+| Migraciones | 5 | ✅ Aplicadas |
 | Documentación | 3 | ✅ README + AGENTS + WALKTHROUGH |
 | Tests | 0 | ⏳ Pendiente |
 
