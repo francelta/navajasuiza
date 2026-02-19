@@ -190,3 +190,13 @@ if _klaes_server and _klaes_db:
 else:
     KLAES_DB_CONNECTION_STRING = ''
 
+# ============================================
+# File Upload — Big Data (Qlik QVD up to 1 GB)
+# ============================================
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1073741824      # 1 GB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 1073741824      # 1 GB
+
+# Force large files to disk (TemporaryFile), never hold in RAM
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+]

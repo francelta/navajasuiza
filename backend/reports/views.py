@@ -21,7 +21,7 @@ from .services.qlik_parser import process_file
 logger = logging.getLogger(__name__)
 
 ALLOWED_EXTENSIONS = {'csv', 'xlsx', 'xls', 'qvd'}
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+MAX_FILE_SIZE = 1024 * 1024 * 1024  # 1 GB
 
 
 class ReportUploadView(APIView):
