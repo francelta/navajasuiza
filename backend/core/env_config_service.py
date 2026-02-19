@@ -37,6 +37,10 @@ REQUIRED_ENV_VARS = [
     ('PATH_OUTPUT_CSV', 'Carpeta Salida CSV', 'Klaes / ETL', False, '/ruta/carpeta/csv_output'),
     ('CMD_ETL_KLAES_SAGE', 'Comando ETL', 'Klaes / ETL', False, 'C:/Klaes/ETL/klaes_to_sage.exe'),
 
+    # --- KlaesRelay (HTTP Bridge) ---
+    ('KLAES_RELAY_URL', 'URL del Relay', 'KlaesRelay', False, 'http://192.168.2.202:5000'),
+    ('KLAES_RELAY_TOKEN', 'Token del Relay', 'KlaesRelay', True, ''),
+
     # --- Sage X3 Web Service ---
     ('SAGE_WS_URL', 'URL Web Service Sage', 'Sage X3', False, 'http://servidor-sage:8124/soap-wsdl/...'),
     ('SAGE_WS_USER', 'Usuario Sage', 'Sage X3', False, 'admin'),

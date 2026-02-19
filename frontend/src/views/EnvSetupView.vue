@@ -170,6 +170,7 @@ const groupIcons = {
   'Klaes / ETL': '📄',
   'Sage X3': '🏭',
   'Klaes SQL Server': '🗄️',
+  'KlaesRelay': '🌐',
 }
 
 const pendingChanges = computed(() => {

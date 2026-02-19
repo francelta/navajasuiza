@@ -156,6 +156,12 @@ KLAES_CSV_OUTPUT_PATH = os.getenv('PATH_OUTPUT_CSV', '')
 KLAES_ETL_COMMAND = os.getenv('CMD_ETL_KLAES_SAGE', '')
 
 # ============================================
+# KlaesRelay — HTTP Bridge Agent
+# ============================================
+KLAES_RELAY_URL = os.getenv('KLAES_RELAY_URL', 'http://192.168.2.202:5000')
+KLAES_RELAY_TOKEN = os.getenv('KLAES_RELAY_TOKEN', 'navajasuiza-relay-2026')
+
+# ============================================
 # Sage X3 Web Service
 # ============================================
 SAGE_WS_URL = os.getenv('SAGE_WS_URL', '')
